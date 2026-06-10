@@ -1,0 +1,182 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String     @id @default(cuid())
+  email     String     @unique
+  name      String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  profile   UserProfile?
+  offers    JobOffer[]
+  negotiations Negotiation[]
+  interviews MockInterview[]
+  careerPlans CareerPlan[]
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  cv              String?
+  targetRole      String?
+  targetCompanies String[]
+  experienceYears Int?
+  skills          String[]
+  
+  salaryExpectation Int?
+  negotiationStyle String?
+  mobilityPreference String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model JobOffer {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  company         String
+  role            String
+  jobDescription  String?
+  
+  salary          Int?
+  equity          String?
+  bonus           Int?
+  benefits        String[]
+  
+  location        String?
+  remote          Boolean  @default(false)
+  startDate       DateTime?
+  
+  source          String
+  sourceUrl       String?
+  
+  evaluationScore Float?
+  marketScore     Float?
+  careerFitScore  Float?
+  
+  status          String   @default("new")
+  notes           String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  negotiation     Negotiation?
+}
+
+model Negotiation {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  offerId         String   @unique
+  offer           JobOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  
+  initialSalary   Int
+  proposedSalary  Int?
+  targetSalary    Int?
+  
+  negotiationStrategy String?
+  leverage        String[]
+  
+  counterOffers   String[]
+  emails          NegotiationEmail[]
+  
+  status          String   @default("pending")
+  successRate     Float?
+  recommendedIncrease Int?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model NegotiationEmail {
+  id              String   @id @default(cuid())
+  negotiationId   String
+  negotiation     Negotiation @relation(fields: [negotiationId], references: [id], onDelete: Cascade)
+  
+  type            String
+  subject         String
+  body            String
+  sentAt          DateTime?
+  responseAt      DateTime?
+  response        String?
+  
+  createdAt       DateTime @default(now())
+}
+
+model MockInterview {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  role            String
+  company         String?
+  type            String
+  difficulty      String
+  
+  transcript      String?
+  feedback        String?
+  score           Float?
+  improvements    String[]
+  
+  duration        Int?
+  videoUrl        String?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model CareerPlan {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  horizon         Int
+  currentRole     String
+  targetRole      String
+  
+  milestones      String
+  skillGaps       String[]
+  learningPlan    String?
+  
+  projectedSalary Int?
+  riskFactors     String[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model MarketData {
+  id              String   @id @default(cuid())
+  
+  role            String
+  location        String
+  experience      Int
+  
+  avgSalary       Int
+  p25Salary       Int
+  p75Salary       Int
+  p90Salary       Int
+  
+  medianBonus     Int?
+  medianEquity    String?
+  
+  source          String
+  datapoints      Int
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([role, location, experience])
+}
